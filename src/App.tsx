@@ -1,19 +1,47 @@
 import * as React from 'react';
 import './App.css';
+import { CentrinelMessage, CentrinelMessageView, keyForMessage } from './CentrinelMessage';
 
-const logo = require('./logo.svg');
+interface CentrinelReport {
+    version: string;
+    messages: CentrinelMessage[];
+}
 
-class App extends React.Component {
+interface CentrinelReportState {
+    report: CentrinelReport;
+}
+
+class App extends React.Component<{}, CentrinelReportState> {
+  constructor() {
+      super();
+      this.state = {
+          report: {
+              version: '0',
+              messages: []
+          }
+      };
+      fetch('./centrinel-report.json').then((response) => {
+          return response.json();
+      }).then ((j) => {
+          this.setState((prevState, props) => {
+              return {report : { version: j.version as string,
+                                 messages: j.messages as CentrinelMessage[]
+                               } };
+          });
+      });
+  }
   render() {
+    const mess = this.state.report.messages.map((msg, i) =>
+        <CentrinelMessageView message={msg} key={keyForMessage(msg, i)}/>);
     return (
       <div className="App">
         <div className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <h2>Welcome to React</h2>
+            Centrinel Report Viewer
         </div>
-        <p className="App-intro">
-          To get started, edit <code>src/App.tsx</code> and save to reload.
-        </p>
+        <div className="App-intro">Notices</div>
+        <div className="messages">
+            {mess}
+        </div>
       </div>
     );
   }
