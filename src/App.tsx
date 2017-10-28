@@ -2,36 +2,58 @@ import * as React from 'react';
 import './App.css';
 import { CentrinelMessage, CentrinelMessageView, keyForMessage } from './CentrinelMessage';
 
+type CentrinelMessageOpt = CentrinelMessage | {};
+
 interface CentrinelReport {
-    version: string;
-    messages: CentrinelMessage[];
+    readonly version: string;
+    readonly messages: CentrinelMessageOpt[];
+}
+
+interface CentrinelReportProps {
 }
 
 interface CentrinelReportState {
     report: CentrinelReport;
 }
 
-class App extends React.Component<{}, CentrinelReportState> {
-  constructor() {
-      super();
+const nilReport: CentrinelReport = {
+  version: '0',
+  messages: []
+};
+
+class App extends React.Component<CentrinelReportProps, CentrinelReportState> {
+  constructor(props: CentrinelReportProps) {
+      super(props);
       this.state = {
-          report: {
-              version: '0',
-              messages: []
-          }
+          report: nilReport
       };
-      fetch('./centrinel-report.json').then((response) => {
-          return response.json();
-      }).then ((j) => {
+  }
+
+  componentDidMount() {
+      this.fetchReport('./centrinel-report.json').then((report) => {
           this.setState((prevState, props) => {
-              return {report : { version: j.version as string,
-                                 messages: j.messages as CentrinelMessage[]
-                               } };
+              return {report : report };
           });
       });
   }
+
+  componentWillUnmount() {
+    this.setState((prevState, props) => {
+      return { report : nilReport };
+    });
+  }
+
+  async fetchReport(url: string): Promise<CentrinelReport> {
+    const response = await fetch (url);
+    const j = await response.json();
+    return { version: j.version as string,
+             messages: j.messages as CentrinelMessageOpt[]
+             };
+  }
+
   render() {
-    const mess = this.state.report.messages.map((msg, i) =>
+    const ms = this.state.report.messages;
+    const mess = ms.map((msg, i) =>
         <CentrinelMessageView message={msg} key={keyForMessage(msg, i)}/>);
     return (
       <div className="App">
@@ -39,8 +61,9 @@ class App extends React.Component<{}, CentrinelReportState> {
             Centrinel Report Viewer
         </div>
         <div className="App-intro">Notices</div>
+        <div>There are {ms.length} messages</div>
         <div className="messages">
-            {mess}
+            {...mess}
         </div>
       </div>
     );
