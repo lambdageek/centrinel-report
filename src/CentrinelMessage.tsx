@@ -5,6 +5,8 @@ export interface CentrinelMessage {
     readonly contents: string | [boolean, string];
 }
 
+export type CentrinelMessageOpt = CentrinelMessage | {};
+
 function isCentrinelMessage (m: CentrinelMessage | {}): m is CentrinelMessage {
   return (m as CentrinelMessage).contents !== undefined && (m as CentrinelMessage).tag !== undefined;
 }
