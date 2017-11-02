@@ -3,7 +3,7 @@
 import { CentrinelReport } from './CentrinelReport';
 
 export interface StateTypeBase {
-  stateType: 'Initial' | 'LoadedReport' | 'ReportLoadError';
+  stateType: 'Initial' | 'LoadedReport' | 'ReportLoadError' | 'IncorrectVersion';
 }
 
 export interface InitialState extends StateTypeBase {
@@ -34,4 +34,16 @@ export function reportLoadErrorState(msg: string): ReportLoadErrorState {
            errorMessage: msg };
 }
 
-export type StateType = InitialState | CentrinelReportState | ReportLoadErrorState;
+export interface IncorrectVersionState extends StateTypeBase {
+  stateType: 'IncorrectVersion';
+  expectedVersion: string;
+  actualVersion: string;
+}
+
+export function incorrectVersionState(expectedVersion: string, actualVersion: string): IncorrectVersionState {
+  return { stateType: 'IncorrectVersion',
+           expectedVersion: expectedVersion,
+           actualVersion: actualVersion };
+}
+
+export type StateType = InitialState | CentrinelReportState | ReportLoadErrorState | IncorrectVersionState;

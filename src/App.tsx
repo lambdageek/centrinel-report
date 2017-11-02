@@ -4,6 +4,10 @@ import { CentrinelMessageOpt, CentrinelMessageView, keyForMessage } from './Cent
 import * as State from './CentrinelState';
 import { CentrinelReport } from './CentrinelReport';
 
+const expectedReportVersion: string = '0';
+
+const previousReportReleasesURL: string = 'https://github.com/lambdageek/centrinel-report/releases';
+
 interface CentrinelReportProps {
 }
 
@@ -33,16 +37,32 @@ function payloadComponent(state: State.StateType): JSX.Element {
     return reportLoadedComponent(state.report);
   case 'ReportLoadError':
     return <div>Error loading report: {state.errorMessage}</div>;
+  case 'IncorrectVersion':
+    return (
+        <div>
+        <p>Error loading the JSON report version <span>{state.actualVersion}</span>
+        because this version of the report viewer can only handle
+        report format version <span>{state.expectedVersion}</span>
+        </p>
+        <p>For older versions, please use a previous version of the report software
+        from <a href={previousReportReleasesURL}>{previousReportReleasesURL}</a></p>
+        </div>);
   default: return assertNever(state);
   }
 }
 
-async function fetchReport(url: string): Promise<CentrinelReport> {
+async function fetchReport(url: string): Promise<State.StateType> {
   const response = await fetch (url);
   const j = await response.json();
-  return { version: j.version as string,
-           messages: j.messages as CentrinelMessageOpt[]
-         };
+  if (j.centrinel_report_version !== expectedReportVersion) {
+    return State.incorrectVersionState (expectedReportVersion, j.version as string);
+  } else {
+    const report: CentrinelReport = {
+      version: j.centrinel_report_version as string,
+      messages: j.messages as CentrinelMessageOpt[]
+    };
+    return State.centrinelReportState (report);
+  }
 }
 
 class App extends React.Component<{}, State.StateType> {
@@ -52,9 +72,9 @@ class App extends React.Component<{}, State.StateType> {
   }
 
   componentDidMount() {
-    fetchReport('./centrinel-report.json').then((report) => {
+    fetchReport('./centrinel-report.json').then((newState) => {
       this.setState((prevState, props) => {
-        return State.centrinelReportState (report);
+        return newState;
       });
     }).catch((oops) => {
       this.setState ((prevState, props) => {
