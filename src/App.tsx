@@ -1,10 +1,11 @@
 import * as React from 'react';
 import './App.css';
-import { CentrinelMessageOpt, CentrinelMessageView, keyForMessage } from './CentrinelMessage';
+import { TranslationUnitMessageOpt, TranslationUnitMessageOptView,
+         keyForTranslationUnitMessage } from './CentrinelMessage';
 import * as State from './CentrinelState';
 import { CentrinelReport } from './CentrinelReport';
 
-const expectedReportVersion: string = '0';
+const expectedReportVersion: string = '1';
 
 const previousReportReleasesURL: string = 'https://github.com/lambdageek/centrinel-report/releases';
 
@@ -17,16 +18,16 @@ function assertNever(x: never): never {
 
 function reportLoadedComponent(report: CentrinelReport): JSX.Element {
   const ms = report.messages;
-  const mess = ms.map((msg, i) =>
-                      <CentrinelMessageView message={msg} key={keyForMessage(msg, i)}/>);
+  const tums = ms.map ((tum, i) =>
+                       <TranslationUnitMessageOptView tum={tum} key={keyForTranslationUnitMessage(tum, i)}/>);
   return (
-      <div>
-        <div className="App-intro">Notices</div>
-        <div>There are {ms.length} messages</div>
-        <div className="messages">
-        {...mess}
-        </div>
-      </div>);
+    <div>
+      <div className="App-intro">Notices</div>
+      <div>There are {ms.length - 1} translation units</div>
+      <div className="translation-units">
+      {...tums}
+      </div>
+    </div>);
 }
 
 function payloadComponent(state: State.StateType): JSX.Element {
@@ -59,7 +60,7 @@ async function fetchReport(url: string): Promise<State.StateType> {
   } else {
     const report: CentrinelReport = {
       version: j.centrinel_report_version as string,
-      messages: j.messages as CentrinelMessageOpt[]
+      messages: j.messages as TranslationUnitMessageOpt[]
     };
     return State.centrinelReportState (report);
   }

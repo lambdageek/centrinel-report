@@ -1,8 +1,8 @@
 // The type representing an analysis report from Centrinel
 
-import { CentrinelMessageOpt } from './CentrinelMessage';
+import { TranslationUnitMessageOpt } from './CentrinelMessage';
 
 export interface CentrinelReport {
     readonly version: string;
-    readonly messages: CentrinelMessageOpt[];
+    readonly messages: TranslationUnitMessageOpt[];
 }

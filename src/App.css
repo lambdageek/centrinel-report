@@ -13,17 +13,31 @@
   font-size: large;
 }
 
-.messages {
-    padding: 20px red;
-    border: 2px dotted;
-    text-align: left;
-    align: center;
+.translation-units {
+    margin-left: 1em;
 }
 
-.messages > code {
-    background: rgb(192,240, 192);
-    padding: 20px;
+.normal-tum {
+    background: rgb(192,240,192);
     margin: 20px;
+    padding: 5px 0px 5px 0px;
+}
+
+.abnormal-tum {
+    background: rgb(240,192,192);
+    margin: 20px;
+    padding: 5px 0px 5px 0px;
+}
+
+.message {
+    text-align: left;
+    align: center;
+    margin: 5px;
+    border: dotted 2px black;
+}
+
+.message > code {
+    padding: 10px;
     width: 90%;
     white-space: pre;
     display: block;
