@@ -40,9 +40,9 @@ function payloadComponent(state: State.StateType): JSX.Element {
   case 'IncorrectVersion':
     return (
         <div>
-        <p>Error loading the JSON report version <span>{state.actualVersion}</span>
+        <p>Error loading the JSON report version <span>{state.actualVersion}</span>,
         because this version of the report viewer can only handle
-        report format version <span>{state.expectedVersion}</span>
+        report format version <span>{state.expectedVersion}</span>.
         </p>
         <p>For older versions, please use a previous version of the report software
         from <a href={previousReportReleasesURL}>{previousReportReleasesURL}</a></p>
@@ -55,7 +55,7 @@ async function fetchReport(url: string): Promise<State.StateType> {
   const response = await fetch (url);
   const j = await response.json();
   if (j.centrinel_report_version !== expectedReportVersion) {
-    return State.incorrectVersionState (expectedReportVersion, j.version as string);
+    return State.incorrectVersionState (expectedReportVersion, j.centrinel_report_version as string);
   } else {
     const report: CentrinelReport = {
       version: j.centrinel_report_version as string,
