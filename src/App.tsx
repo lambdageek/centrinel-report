@@ -4,16 +4,13 @@ import { TranslationUnitMessageOpt, TranslationUnitMessageOptView,
          keyForTranslationUnitMessage } from './CentrinelMessage';
 import * as State from './CentrinelState';
 import { CentrinelReport } from './CentrinelReport';
+import assertNever from './assertNever';
 
-const expectedReportVersion: string = '1';
+const expectedReportVersion: string = '2';
 
 const previousReportReleasesURL: string = 'https://github.com/lambdageek/centrinel-report/releases';
 
 interface CentrinelReportProps {
-}
-
-function assertNever(x: never): never {
-    throw new Error('Unexpected object: ' + x);
 }
 
 function reportLoadedComponent(report: CentrinelReport): JSX.Element {

@@ -29,4 +29,3 @@ yarn-error.log*
 
 # don't check in centrinel-report.json
 /public/centrinel-report.json
-

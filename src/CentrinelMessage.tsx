@@ -1,33 +1,100 @@
 import * as React from 'react';
+import assertNever from './assertNever';
 
 export interface TranslationUnitMessage {
+  readonly workingDirectory: string;
   readonly translationUnit: string;
-  readonly isAbnormal: boolean;
-  readonly messages: CentrinelMessage[];
+  readonly message: CentrinelMessage;
 }
 
-export type CentrinelMessage = string;
+export interface CentrinelMessageNormal {
+  readonly tag: 'NormalMessages';
+  readonly isAbnormal: boolean;
+  readonly messages: CentrinelAnalysisMessage[];
+}
+
+export interface CentrinelMessageToolFail {
+  readonly tag: 'ToolFailMessage';
+  readonly toolFailure: CentrinelToolFail;
+}
+
+export interface CentrinelAnalysisMessageBase {
+  readonly errorLevel: 'WARNING' | 'ERROR' | 'FATAL ERROR';
+  readonly position: string;
+  readonly lines: string[];
+}
+
+export interface NakedPointerMessage extends CentrinelAnalysisMessageBase {
+  tag: 'nakedPointerMessage';
+  readonly nakedPointerMessage: object[];
+}
+
+export interface RegionMismatchMessage extends CentrinelAnalysisMessageBase {
+  tag: 'regionMismatchMessage';
+  readonly regionMismatchMessage: object[];
+}
+
+export type CentrinelAnalysisMessage = NakedPointerMessage | RegionMismatchMessage;
+
+export interface CentrinelCppToolFail {
+  tag: 'cppToolFail';
+  readonly cppToolFail: string;
+}
+
+export interface CentrinelParseToolFail {
+  tag: 'parseToolFail';
+  readonly parseToolFail: string;
+}
+
+export type CentrinelToolFail = CentrinelCppToolFail | CentrinelParseToolFail;
+
+export type CentrinelMessage = CentrinelMessageNormal | CentrinelMessageToolFail;
 
 export type TranslationUnitMessageOpt = TranslationUnitMessage | {};
 
 function isTranslationUnitMessage (m: TranslationUnitMessage | {}): m is TranslationUnitMessage {
-  return (m as TranslationUnitMessage).translationUnit !== undefined &&
-    (m as TranslationUnitMessage).isAbnormal !== undefined &&
-    (m as TranslationUnitMessage).messages !== undefined;
+  return (m as TranslationUnitMessage).workingDirectory !== undefined &&
+    (m as TranslationUnitMessage).translationUnit !== undefined &&
+    (m as TranslationUnitMessage).message !== undefined;
+}
+
+function getTumClass (tum: TranslationUnitMessage): 'normal-tum' | 'elevated-tum' | 'abnormal-tum' {
+    switch (tum.message.tag) {
+    case 'NormalMessages':
+        return tum.message.isAbnormal ? 'elevated-tum' : 'normal-tum';
+    case 'ToolFailMessage':
+        return 'abnormal-tum';
+    default:
+        return assertNever (tum.message);
+    }
 }
 
 export function TranslationUnitMessageView ({tum}: { tum: TranslationUnitMessage}): JSX.Element {
-  const tumClass = tum.isAbnormal ? 'abnormal-tum' : 'normal-tum';
-  const ms = tum.messages;
-  const mess = ms.map((msg, i) =>
-                      <CentrinelMessageView message={msg} key={keyForMessage(msg, i)}/>);
-  const fp = tum.translationUnit === '' ? 'Translation unit' : tum.translationUnit;
-  return (
-      <div className={tumClass}>
-        <div>{fp}</div>
-        <div>There are {ms.length} messages</div>
-        {...mess}
-      </div>);
+  const tumClass = getTumClass (tum);
+  const fp = tum.translationUnit === '' ? 'Translation unit' : (tum.workingDirectory + '/' + tum.translationUnit);
+  const m = tum.message;
+  switch (m.tag) {
+  case 'NormalMessages': {
+      const ms = m.messages;
+      const mess = ms.map((msg, i) =>
+                                <CentrinelAnalysisMessageView message={msg} key={keyForMessage(msg, i)}/>);
+      return (
+          <div className={tumClass}>
+              <div>{fp}</div>
+              <div>There are {ms.length} messages</div>
+              {...mess}
+          </div>);
+
+  }
+  case 'ToolFailMessage':
+      return (
+        <div className={tumClass}>
+          <div>{fp}</div>
+          <CentrinelToolFailView toolFailure={m.toolFailure} />
+        </div>); // TODO describe the tool failure
+  default:
+    return assertNever (m);
+  }
 }
 
 export function TranslationUnitMessageOptView ({tum}: { tum: TranslationUnitMessageOpt }): JSX.Element | null {
@@ -46,10 +113,27 @@ export function keyForTranslationUnitMessage (tum: {} | TranslationUnitMessage, 
   }
 }
 
-export function CentrinelMessageView ({message}: { message: CentrinelMessage}): JSX.Element {
-    return <div className="message"><code>{message}</code></div>;
+export function CentrinelAnalysisMessageView ({message}: { message: CentrinelAnalysisMessage}): JSX.Element {
+  const lines = message.lines;
+  const msg = message.position + ': ' + message.errorLevel + ' '
+        + lines.join('\n');
+  return (
+    <div className="message">
+      <code>{msg}</code>
+    </div>);
 }
 
-export function keyForMessage (msg: {} | CentrinelMessage, i: number): string {
-    return i.toString();
+export function keyForMessage (msg: CentrinelAnalysisMessage, i: number): string {
+    return msg.position + '\n' + msg.lines.join ('\n');
+}
+
+export function CentrinelToolFailView ({toolFailure}: { toolFailure: CentrinelToolFail }): JSX.Element {
+  switch (toolFailure.tag) {
+  case 'cppToolFail':
+    return <div className="message">C preprocessor failed with {toolFailure.cppToolFail}.</div>;
+  case 'parseToolFail':
+    return <div className="message">Parser error:<code>{toolFailure.parseToolFail}</code></div>;
+  default:
+    return assertNever (toolFailure);
+  }
 }
