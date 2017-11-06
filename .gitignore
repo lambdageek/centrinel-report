@@ -1,5 +1,8 @@
 # See https://help.github.com/ignore-files/ for more about ignoring files.
 
+# emacs backup files
+*~
+
 # dependencies
 /node_modules
 
@@ -22,3 +25,8 @@ yarn-error.log*
 
 # visual studio stuff
 /.vs/
+/.vscode/
+
+# don't check in centrinel-report.json
+/public/centrinel-report.json
+
