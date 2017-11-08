@@ -13,6 +13,14 @@
   font-size: large;
 }
 
+.TOC {
+    font-size: small;
+    height: 20ex;
+    overflow: scroll;
+    border: 1px solid;
+    margin: 50px;
+}
+
 .translation-units {
     margin-left: 1em;
 }

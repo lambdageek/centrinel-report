@@ -52,7 +52,7 @@ export type CentrinelMessage = CentrinelMessageNormal | CentrinelMessageToolFail
 
 export type TranslationUnitMessageOpt = TranslationUnitMessage | {};
 
-function isTranslationUnitMessage (m: TranslationUnitMessage | {}): m is TranslationUnitMessage {
+export function isTranslationUnitMessage (m: TranslationUnitMessage | {}): m is TranslationUnitMessage {
   return (m as TranslationUnitMessage).workingDirectory !== undefined &&
     (m as TranslationUnitMessage).translationUnit !== undefined &&
     (m as TranslationUnitMessage).message !== undefined;
@@ -69,9 +69,13 @@ function getTumClass (tum: TranslationUnitMessage): 'normal-tum' | 'elevated-tum
     }
 }
 
+function tumFullPath(tum: TranslationUnitMessage): string {
+  return tum.translationUnit === '' ? 'Translation unit' : (tum.workingDirectory + '/' + tum.translationUnit);
+}
+
 export function TranslationUnitMessageView ({tum}: { tum: TranslationUnitMessage}): JSX.Element {
   const tumClass = getTumClass (tum);
-  const fp = tum.translationUnit === '' ? 'Translation unit' : (tum.workingDirectory + '/' + tum.translationUnit);
+  const fp = tumFullPath (tum);
   const m = tum.message;
   switch (m.tag) {
   case 'NormalMessages': {
@@ -80,6 +84,7 @@ export function TranslationUnitMessageView ({tum}: { tum: TranslationUnitMessage
                                 <CentrinelAnalysisMessageView message={msg} key={keyForMessage(msg, i)}/>);
       return (
           <div className={tumClass}>
+              <a id={fp} />
               <div>{fp}</div>
               <div>There are {ms.length} messages</div>
               {...mess}
@@ -107,7 +112,7 @@ export function TranslationUnitMessageOptView ({tum}: { tum: TranslationUnitMess
 
 export function keyForTranslationUnitMessage (tum: {} | TranslationUnitMessage, i: number): string {
   if (isTranslationUnitMessage (tum)) {
-    return tum.translationUnit;
+    return tumFullPath (tum);
   } else {
     return i.toString();
   }

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import './App.css';
-import { TranslationUnitMessageOpt, TranslationUnitMessageOptView,
-         keyForTranslationUnitMessage } from './CentrinelMessage';
+import { CentrinelMessage, TranslationUnitMessageOpt, TranslationUnitMessageOptView,
+         keyForTranslationUnitMessage, isTranslationUnitMessage } from './CentrinelMessage';
 import * as State from './CentrinelState';
 import { CentrinelReport } from './CentrinelReport';
 import assertNever from './assertNever';
@@ -13,6 +13,39 @@ const previousReportReleasesURL: string = 'https://github.com/lambdageek/centrin
 interface CentrinelReportProps {
 }
 
+function summaryForCentrinelMessage (message: CentrinelMessage): string {
+  switch (message.tag) {
+  case 'NormalMessages':
+    return message.messages.length.toString () + ' notices';
+  case 'ToolFailMessage':
+    return 'tool failure';
+  default:
+    return assertNever (message);
+  }
+}
+
+function anchor(s: string): string {
+  return '#' + s;
+}
+
+function translationUnitSummary (tum: TranslationUnitMessageOpt, i: number): JSX.Element | null {
+  if (isTranslationUnitMessage (tum)) {
+    const s = tum.workingDirectory + '/' + tum.translationUnit;
+    return (
+        <li key={keyForTranslationUnitMessage(tum, i)}>
+          <a href={anchor(s)}>{s}</a>: {summaryForCentrinelMessage (tum.message)}
+        </li>);
+  } else {
+    return null;
+  }
+}
+
+function TranslationUnitTOC ({tums }: {tums: TranslationUnitMessageOpt[] }): JSX.Element {
+  const elts = tums.map ((tum, i) =>
+                         translationUnitSummary(tum, i));
+  return <ul>{...elts}</ul>;
+}
+
 function reportLoadedComponent(report: CentrinelReport): JSX.Element {
   const ms = report.messages;
   const tums = ms.map ((tum, i) =>
@@ -20,7 +53,10 @@ function reportLoadedComponent(report: CentrinelReport): JSX.Element {
   return (
     <div>
       <div className="App-intro">Notices</div>
-      <div>There are {ms.length - 1} translation units</div>
+      <div className="TOC">
+        <div>There are {ms.length - 1} translation units</div>
+        <TranslationUnitTOC tums={ms} />
+      </div>
       <div className="translation-units">
       {...tums}
       </div>
