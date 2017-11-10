@@ -4,11 +4,14 @@ import { CentrinelMessage, TranslationUnitMessageOpt, TranslationUnitMessageOptV
          keyForTranslationUnitMessage, isTranslationUnitMessage } from './CentrinelMessage';
 import * as State from './CentrinelState';
 import { CentrinelReport } from './CentrinelReport';
+import anchor from './anchor';
 import assertNever from './assertNever';
 
 const expectedReportVersion: string = '2';
 
 const previousReportReleasesURL: string = 'https://github.com/lambdageek/centrinel-report/releases';
+
+const tocId: string = 'table-of-contents';
 
 interface CentrinelReportProps {
 }
@@ -22,10 +25,6 @@ function summaryForCentrinelMessage (message: CentrinelMessage): string {
   default:
     return assertNever (message);
   }
-}
-
-function anchor(s: string): string {
-  return '#' + s;
 }
 
 function translationUnitSummary (tum: TranslationUnitMessageOpt, i: number): JSX.Element | null {
@@ -43,13 +42,17 @@ function translationUnitSummary (tum: TranslationUnitMessageOpt, i: number): JSX
 function TranslationUnitTOC ({tums }: {tums: TranslationUnitMessageOpt[] }): JSX.Element {
   const elts = tums.map ((tum, i) =>
                          translationUnitSummary(tum, i));
-  return <ul>{...elts}</ul>;
+  return <div id={tocId}><ul>{...elts}</ul></div>;
 }
 
 function reportLoadedComponent(report: CentrinelReport): JSX.Element {
   const ms = report.messages;
-  const tums = ms.map ((tum, i) =>
-                       <TranslationUnitMessageOptView tum={tum} key={keyForTranslationUnitMessage(tum, i)}/>);
+  const tums = ms.map ((tum, i) => (
+                       <TranslationUnitMessageOptView
+                         tum={tum}
+                         tocId={tocId}
+                         key={keyForTranslationUnitMessage(tum, i)}
+                       />));
   return (
     <div>
       <div className="App-intro">Notices</div>

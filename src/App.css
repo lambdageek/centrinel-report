@@ -21,6 +21,11 @@
     margin: 50px;
 }
 
+.back-to-toc {
+    text-align: right;
+    font-size: x-small;
+}
+
 .translation-units {
     margin-left: 1em;
 }

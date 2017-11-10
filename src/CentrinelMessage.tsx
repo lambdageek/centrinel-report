@@ -1,4 +1,5 @@
 import * as React from 'react';
+import anchor from './anchor';
 import assertNever from './assertNever';
 
 export interface TranslationUnitMessage {
@@ -73,21 +74,26 @@ function tumFullPath(tum: TranslationUnitMessage): string {
   return tum.translationUnit === '' ? 'Translation unit' : (tum.workingDirectory + '/' + tum.translationUnit);
 }
 
-export function TranslationUnitMessageView ({tum}: { tum: TranslationUnitMessage}): JSX.Element {
+export function TranslationUnitMessageView ({tum, tocId}: { tum: TranslationUnitMessage,
+                                                            tocId: string | null }): JSX.Element {
   const tumClass = getTumClass (tum);
   const fp = tumFullPath (tum);
   const m = tum.message;
   switch (m.tag) {
   case 'NormalMessages': {
       const ms = m.messages;
-      const mess = ms.map((msg, i) =>
-                                <CentrinelAnalysisMessageView message={msg} key={keyForMessage(msg, i)}/>);
+      const mess = ms.map((msg, i) => (
+                          <CentrinelAnalysisMessageView
+                            message={msg}
+                            key={keyForMessage(msg, i)}
+                          />));
       return (
           <div className={tumClass}>
               <a id={fp} />
               <div>{fp}</div>
               <div>There are {ms.length} messages</div>
               {...mess}
+              <BackToTOC tocId={tocId} />
           </div>);
 
   }
@@ -96,15 +102,17 @@ export function TranslationUnitMessageView ({tum}: { tum: TranslationUnitMessage
         <div className={tumClass}>
           <div>{fp}</div>
           <CentrinelToolFailView toolFailure={m.toolFailure} />
+          <BackToTOC tocId={tocId} />
         </div>); // TODO describe the tool failure
   default:
     return assertNever (m);
   }
 }
 
-export function TranslationUnitMessageOptView ({tum}: { tum: TranslationUnitMessageOpt }): JSX.Element | null {
+export function TranslationUnitMessageOptView ({tum, tocId}: { tum: TranslationUnitMessageOpt,
+                                                               tocId: string | null }): JSX.Element | null {
   if (isTranslationUnitMessage (tum)) {
-    return <TranslationUnitMessageView tum={tum} />;
+    return <TranslationUnitMessageView tum={tum} tocId={tocId} />;
   } else {
     return null;
   }
@@ -118,7 +126,7 @@ export function keyForTranslationUnitMessage (tum: {} | TranslationUnitMessage, 
   }
 }
 
-export function CentrinelAnalysisMessageView ({message}: { message: CentrinelAnalysisMessage}): JSX.Element {
+export function CentrinelAnalysisMessageView ({message}: { message: CentrinelAnalysisMessage }): JSX.Element {
   const lines = message.lines;
   const msg = message.position + ': ' + message.errorLevel + ' '
         + lines.join('\n');
@@ -135,10 +143,24 @@ export function keyForMessage (msg: CentrinelAnalysisMessage, i: number): string
 export function CentrinelToolFailView ({toolFailure}: { toolFailure: CentrinelToolFail }): JSX.Element {
   switch (toolFailure.tag) {
   case 'cppToolFail':
-    return <div className="message">C preprocessor failed with {toolFailure.cppToolFail}.</div>;
+    return (
+        <div className="message">
+          <p>C preprocessor failed with {toolFailure.cppToolFail}.</p>
+        </div>);
   case 'parseToolFail':
-    return <div className="message">Parser error:<code>{toolFailure.parseToolFail}</code></div>;
+    return (
+        <div className="message">
+          Parser error:<code>{toolFailure.parseToolFail}</code>
+        </div>);
   default:
     return assertNever (toolFailure);
+  }
+}
+
+function BackToTOC ({tocId }: {tocId: string | null}): JSX.Element | null {
+  if (tocId === null) {
+    return null;
+  } else {
+    return <div className="back-to-toc"><a href={anchor(tocId)}>Back to top</a></div>;
   }
 }
