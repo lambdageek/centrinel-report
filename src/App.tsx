@@ -28,6 +28,11 @@ function summaryForCentrinelMessage (message: CentrinelMessage): string {
   }
 }
 
+function Every<T>({items, children}: {items: T[], children: (arg: T, idx: number) => JSX.Element}): JSX.Element {
+  const r = items.map ((x, i) => children (x, i));
+  return <>{r}</>;
+}
+
 let TranslationUnitSummary: React.SFC <{tum: TranslationUnitMessageOpt}> =
 ({tum}) => {
   if (isTranslationUnitMessage (tum)) {
@@ -43,23 +48,22 @@ let TranslationUnitSummary: React.SFC <{tum: TranslationUnitMessageOpt}> =
 
 let TranslationUnitTOC: React.SFC<{tums: TranslationUnitMessageOpt[] }> =
 ({tums}) => {
-  const elts = tums.map ((tum, i) => (
-      <TranslationUnitSummary
-       tum={tum}
-       key={keyForTranslationUnitMessage (tum, i)}
-      />));
-  return <div id={tocId}><ul>{elts}</ul></div>;
+  const k = keyForTranslationUnitMessage;
+  return (
+      <div id={tocId}>
+      <ul>
+      <Every items={tums}>{
+        (tum: TranslationUnitMessageOpt, idx) =>
+          <TranslationUnitSummary tum={tum} key={k (tum, idx)} />}
+      </Every>
+      </ul>
+      </div>
+  );
 };
 
 let ReportLoadedComponent: React.SFC<{report: CentrinelReport}> =
 ({report}) => {
   const ms = report.messages;
-  const tums = ms.map ((tum, i) => (
-                       <TranslationUnitMessageOptView
-                         tum={tum}
-                         tocId={tocId}
-                         key={keyForTranslationUnitMessage(tum, i)}
-                       />));
   return (
     <div>
       <div className="App-intro">Notices</div>
@@ -67,7 +71,17 @@ let ReportLoadedComponent: React.SFC<{report: CentrinelReport}> =
         <div>There are {ms.length - 1} translation units</div>
         <TranslationUnitTOC tums={ms} />
       </div>
-      <div className="translation-units">{tums}</div>
+      <div className="translation-units">
+      <Every items={ms}>{
+        (tum, i) =>
+          <TranslationUnitMessageOptView
+           tum={tum}
+           tocId={tocId}
+           key={keyForTranslationUnitMessage(tum, i)}
+          />
+      }
+      </Every>
+      </div>
     </div>);
 };
 
