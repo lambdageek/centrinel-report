@@ -1,11 +1,12 @@
 import * as React from 'react';
 import './App.css';
-import { CentrinelMessage, TranslationUnitMessageOpt, TranslationUnitMessageOptView,
-         keyForTranslationUnitMessage, isTranslationUnitMessage } from './CentrinelMessage';
-import * as State from './CentrinelState';
-import { CentrinelReport } from './CentrinelReport';
-import anchor from './anchor';
-import assertNever from './assertNever';
+import { CentrinelMessage, TranslationUnitMessageOpt,
+         keyForTranslationUnitMessage, isTranslationUnitMessage } from './model/CentrinelMessage';
+import { TranslationUnitMessageOptView } from './component/CentrinelMessage';
+import * as State from './model/CentrinelState';
+import { CentrinelReport } from './model/CentrinelReport';
+import anchor from './component/anchor';
+import assertNever from './model/assertNever';
 
 const expectedReportVersion: string = '2';
 
