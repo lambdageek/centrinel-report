@@ -28,25 +28,31 @@ function summaryForCentrinelMessage (message: CentrinelMessage): string {
   }
 }
 
-function translationUnitSummary (tum: TranslationUnitMessageOpt, i: number): JSX.Element | null {
+let TranslationUnitSummary: React.SFC <{tum: TranslationUnitMessageOpt}> =
+({tum}) => {
   if (isTranslationUnitMessage (tum)) {
     const s = tum.workingDirectory + '/' + tum.translationUnit;
     return (
-        <li key={keyForTranslationUnitMessage(tum, i)}>
+        <li>
           <a href={anchor(s)}>{s}</a>: {summaryForCentrinelMessage (tum.message)}
         </li>);
   } else {
     return null;
   }
-}
+};
 
-function TranslationUnitTOC ({tums }: {tums: TranslationUnitMessageOpt[] }): JSX.Element {
-  const elts = tums.map ((tum, i) =>
-                         translationUnitSummary(tum, i));
-  return <div id={tocId}><ul>{...elts}</ul></div>;
-}
+let TranslationUnitTOC: React.SFC<{tums: TranslationUnitMessageOpt[] }> =
+({tums}) => {
+  const elts = tums.map ((tum, i) => (
+      <TranslationUnitSummary
+       tum={tum}
+       key={keyForTranslationUnitMessage (tum, i)}
+      />));
+  return <div id={tocId}><ul>{elts}</ul></div>;
+};
 
-function reportLoadedComponent(report: CentrinelReport): JSX.Element {
+let ReportLoadedComponent: React.SFC<{report: CentrinelReport}> =
+({report}) => {
   const ms = report.messages;
   const tums = ms.map ((tum, i) => (
                        <TranslationUnitMessageOptView
@@ -61,33 +67,32 @@ function reportLoadedComponent(report: CentrinelReport): JSX.Element {
         <div>There are {ms.length - 1} translation units</div>
         <TranslationUnitTOC tums={ms} />
       </div>
-      <div className="translation-units">
-      {...tums}
-      </div>
+      <div className="translation-units">{tums}</div>
     </div>);
-}
+};
 
-function payloadComponent(state: State.StateType): JSX.Element {
-  switch (state.stateType) {
+let PayloadComponent: React.SFC<{loadState: State.StateType}> =
+({loadState}) => {
+  switch (loadState.stateType) {
   case 'Initial':
     return <div>Loading...</div>;
   case 'LoadedReport':
-    return reportLoadedComponent(state.report);
+    return <ReportLoadedComponent report={loadState.report} />;
   case 'ReportLoadError':
-    return <div>Error loading report: {state.errorMessage}</div>;
+    return <div>Error loading report: {loadState.errorMessage}</div>;
   case 'IncorrectVersion':
     return (
         <div>
-        <p>Error loading the JSON report version <span>{state.actualVersion}</span>,
+        <p>Error loading the JSON report version <span>{loadState.actualVersion}</span>,
         because this version of the report viewer can only handle
-        report format version <span>{state.expectedVersion}</span>.
+        report format version <span>{loadState.expectedVersion}</span>.
         </p>
         <p>For older versions, please use a previous version of the report software
         from <a href={previousReportReleasesURL}>{previousReportReleasesURL}</a></p>
         </div>);
-  default: return assertNever(state);
+  default: return assertNever(loadState);
   }
-}
+};
 
 async function fetchReport(url: string): Promise<State.StateType> {
   const response = await fetch (url);
@@ -128,13 +133,12 @@ class App extends React.Component<{}, State.StateType> {
   }
 
   render() {
-    const payload = payloadComponent (this.state);
     return (
       <div className="App">
         <div className="App-header">
         Centrinel Report Viewer
         </div>
-        {payload}
+        <PayloadComponent loadState={this.state} />
       </div>
     );
   }
