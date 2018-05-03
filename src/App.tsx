@@ -7,8 +7,9 @@ import * as State from './model/CentrinelState';
 import { CentrinelReport } from './model/CentrinelReport';
 import anchor from './component/anchor';
 import assertNever from './model/assertNever';
+import Every from './component/Every';
 
-const expectedReportVersion: string = '2';
+const expectedReportVersion: string = '3';
 
 const previousReportReleasesURL: string = 'https://github.com/lambdageek/centrinel-report/releases';
 
@@ -26,11 +27,6 @@ function summaryForCentrinelMessage (message: CentrinelMessage): string {
   default:
     return assertNever (message);
   }
-}
-
-function Every<T>({items, children}: {items: T[], children: (arg: T, idx: number) => JSX.Element}): JSX.Element {
-  const r = items.map ((x, i) => children (x, i));
-  return <>{r}</>;
 }
 
 let TranslationUnitSummary: React.SFC <{tum: TranslationUnitMessageOpt}> =

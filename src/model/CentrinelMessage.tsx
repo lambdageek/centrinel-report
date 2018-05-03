@@ -1,49 +1,60 @@
 // Centrinel message format JSON blobs
 
+import assertNever from './assertNever';
+import { CodeZipper,
+       } from './CodeZipper';
+import { Tagged } from './Tagged';
+
 export interface TranslationUnitMessage {
   readonly workingDirectory: string;
   readonly translationUnit: string;
   readonly message: CentrinelMessage;
 }
 
-export interface CentrinelMessageNormal {
-  readonly tag: 'NormalMessages';
+export type CentrinelMessageNormal = Tagged<'NormalMessages'> & {
   readonly isAbnormal: boolean;
   readonly messages: CentrinelAnalysisMessage[];
-}
+};
 
-export interface CentrinelMessageToolFail {
-  readonly tag: 'ToolFailMessage';
+export type CentrinelMessageToolFail = Tagged<'ToolFailMessage'> & {
   readonly toolFailure: CentrinelToolFail;
-}
+};
+
+export type ErrorLevel = 'WARNING' | 'ERROR' | 'FATAL ERROR';
 
 export interface CentrinelAnalysisMessageBase {
-  readonly errorLevel: 'WARNING' | 'ERROR' | 'FATAL ERROR';
+  readonly errorLevel: ErrorLevel;
   readonly position: string;
+}
+
+export type NakedPointerMessage = Tagged <'nakedPointerMessage'> & CentrinelAnalysisMessageBase & {
+  readonly nakedPointerMessage: NakedPointerMessagePayload;
+};
+
+export interface NakedPointerMessagePayload {
+  readonly inDefinition: boolean;
+  readonly victims: NakedPointerVictim[];
+}
+
+export interface NakedPointerVictim {
+  readonly type: string;
+  readonly position: CodeZipper;
+}
+
+export type RegionMismatchMessage = Tagged<'regionMismatchMessage'> & CentrinelAnalysisMessageBase & {
   readonly lines: string[];
-}
-
-export interface NakedPointerMessage extends CentrinelAnalysisMessageBase {
-  tag: 'nakedPointerMessage';
-  readonly nakedPointerMessage: object[];
-}
-
-export interface RegionMismatchMessage extends CentrinelAnalysisMessageBase {
-  tag: 'regionMismatchMessage';
   readonly regionMismatchMessage: object[];
-}
+};
 
 export type CentrinelAnalysisMessage = NakedPointerMessage | RegionMismatchMessage;
 
-export interface CentrinelCppToolFail {
-  tag: 'cppToolFail';
+export type CentrinelCppToolFail = Tagged<'cppToolFail'> & {
   readonly cppToolFail: string;
-}
+};
 
-export interface CentrinelParseToolFail {
-  tag: 'parseToolFail';
+export type CentrinelParseToolFail = Tagged<'parseToolFail'> & {
   readonly parseToolFail: string;
-}
+};
 
 export type CentrinelToolFail = CentrinelCppToolFail | CentrinelParseToolFail;
 
@@ -70,5 +81,16 @@ export function keyForTranslationUnitMessage (tum: {} | TranslationUnitMessage, 
 }
 
 export function keyForMessage (msg: CentrinelAnalysisMessage, i: number): string {
-    return msg.position + '\n' + msg.lines.join ('\n');
+  switch (msg.tag) {
+    case 'nakedPointerMessage':
+      return msg.position + '\n' + keyForNakedPointerMessagePayload (msg.nakedPointerMessage);
+    case 'regionMismatchMessage':
+      return msg.position + '\n' + msg.lines.join ('\n');
+    default:
+      return assertNever (msg);
+  }
+}
+
+export function keyForNakedPointerMessagePayload (p: NakedPointerMessagePayload): string {
+  return p.toString ();
 }
