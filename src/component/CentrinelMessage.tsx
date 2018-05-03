@@ -7,8 +7,13 @@ import { TranslationUnitMessage,
          CentrinelAnalysisMessage,
          CentrinelToolFail,
          keyForMessage,
+         NakedPointerMessagePayload,
+         ErrorLevel,
+         NakedPointerVictim,
        } from '../model/CentrinelMessage';
+import VictimPositionView from './VictimPosition';
 import assertNever from '../model/assertNever';
+import Every from './Every';
 
 function getTumClass (tum: TranslationUnitMessage): 'normal-tum' | 'elevated-tum' | 'abnormal-tum' {
     switch (tum.message.tag) {
@@ -65,16 +70,49 @@ export function TranslationUnitMessageOptView ({tum, tocId}: { tum: TranslationU
   }
 }
 
-export function CentrinelAnalysisMessageView ({message}: { message: CentrinelAnalysisMessage }): JSX.Element {
-  const lines = message.lines;
-  const msg = message.position + ': ' + message.errorLevel + ' '
-        + lines.join('\n');
-  return (
-    <div className="message">
-      <code>{msg}</code>
-    </div>);
+let NakedPointerVictimView: React.SFC<NakedPointerVictim> =
+  ({type, position}) => (
+  <span>
+    <span>Pointer to managed heap {type}</span> in{'\n'}
+    <VictimPositionView {... position} />
+    {'\n'}
+  </span>);
+
+let MessageHeader: React.SFC<{position: string, errorLevel: ErrorLevel}> =
+  ({position, errorLevel}) => <span>{position + ': ' + errorLevel + ' '}</span>;
+
+let NakedPointerMessagePayloadView: React.SFC<NakedPointerMessagePayload> =
+  ({inDefinition, victims}) => {
+    const msghead = 'Naked pointer(s) to managed object(s) found in ' + (inDefinition ? 'definition' : 'declarataion');
+    return (
+        <>
+        <span>{msghead}</span>{'\n'}
+        <Every items={victims}>
+        {(victim) => <NakedPointerVictimView {... victim} />}
+        </Every>
+        </>
+        );
+  };
+
+export function RegionMismatchMessageView ({tag, lines}: {tag: 'regionMismatchMessage'; lines: string[]}): JSX.Element {
+  const msg = ' ' + lines.join ('\n');
+  return <span>{msg}</span>;
 }
 
+export function CentrinelAnalysisMessageView ({message}: { message: CentrinelAnalysisMessage }): JSX.Element {
+  return (
+      <div className="message">
+      <code>
+      <MessageHeader position={message.position} errorLevel={message.errorLevel} />
+      {
+        message.tag === 'nakedPointerMessage' ?
+          <NakedPointerMessagePayloadView {... message.nakedPointerMessage} /> :
+          <RegionMismatchMessageView tag={message.tag} lines={message.lines} />
+      }
+      </code>
+      </div>);
+}
+  
 export function CentrinelToolFailView ({toolFailure}: { toolFailure: CentrinelToolFail }): JSX.Element {
   switch (toolFailure.tag) {
   case 'cppToolFail':
