@@ -1,85 +1,17 @@
 import * as React from 'react';
 import './App.css';
-import { CentrinelMessage, TranslationUnitMessageOpt,
-         keyForTranslationUnitMessage, isTranslationUnitMessage } from './model/CentrinelMessage';
-import { TranslationUnitMessageOptView } from './component/CentrinelMessage';
 import * as State from './model/CentrinelState';
-import { CentrinelReport } from './model/CentrinelReport';
-import anchor from './component/anchor';
+import * as Model from './model/CentrinelReport';
+import { TranslationUnitMessageOpt } from './model/CentrinelMessage';
 import assertNever from './model/assertNever';
-import Every from './component/Every';
+import { CentrinelReport } from './component/CentrinelReport';
 
 const expectedReportVersion: string = '3';
 
 const previousReportReleasesURL: string = 'https://github.com/lambdageek/centrinel-report/releases';
 
-const tocId: string = 'table-of-contents';
-
 interface CentrinelReportProps {
 }
-
-function summaryForCentrinelMessage (message: CentrinelMessage): string {
-  switch (message.tag) {
-  case 'NormalMessages':
-    return message.messages.length.toString () + ' notices';
-  case 'ToolFailMessage':
-    return 'tool failure';
-  default:
-    return assertNever (message);
-  }
-}
-
-let TranslationUnitSummary: React.SFC <{tum: TranslationUnitMessageOpt}> =
-({tum}) => {
-  if (isTranslationUnitMessage (tum)) {
-    const s = tum.workingDirectory + '/' + tum.translationUnit;
-    return (
-        <li>
-          <a href={anchor(s)}>{s}</a>: {summaryForCentrinelMessage (tum.message)}
-        </li>);
-  } else {
-    return null;
-  }
-};
-
-let TranslationUnitTOC: React.SFC<{tums: TranslationUnitMessageOpt[] }> =
-({tums}) => {
-  const k = keyForTranslationUnitMessage;
-  return (
-      <div id={tocId}>
-      <ul>
-      <Every items={tums}>{
-        (tum: TranslationUnitMessageOpt, idx) =>
-          <TranslationUnitSummary tum={tum} key={k (tum, idx)} />}
-      </Every>
-      </ul>
-      </div>
-  );
-};
-
-let ReportLoadedComponent: React.SFC<{report: CentrinelReport}> =
-({report}) => {
-  const ms = report.messages;
-  return (
-    <div>
-      <div className="App-intro">Notices</div>
-      <div className="TOC">
-        <div>There are {ms.length - 1} translation units</div>
-        <TranslationUnitTOC tums={ms} />
-      </div>
-      <div className="translation-units">
-      <Every items={ms}>{
-        (tum, i) =>
-          <TranslationUnitMessageOptView
-           tum={tum}
-           tocId={tocId}
-           key={keyForTranslationUnitMessage(tum, i)}
-          />
-      }
-      </Every>
-      </div>
-    </div>);
-};
 
 let PayloadComponent: React.SFC<{loadState: State.StateType}> =
 ({loadState}) => {
@@ -87,7 +19,7 @@ let PayloadComponent: React.SFC<{loadState: State.StateType}> =
   case 'Initial':
     return <div>Loading...</div>;
   case 'LoadedReport':
-    return <ReportLoadedComponent report={loadState.report} />;
+    return <CentrinelReport report={loadState.report} />;
   case 'ReportLoadError':
     return <div>Error loading report: {loadState.errorMessage}</div>;
   case 'IncorrectVersion':
@@ -110,7 +42,7 @@ async function fetchReport(url: string): Promise<State.StateType> {
   if (j.centrinel_report_version !== expectedReportVersion) {
     return State.incorrectVersionState (expectedReportVersion, j.centrinel_report_version as string);
   } else {
-    const report: CentrinelReport = {
+    const report: Model.CentrinelReport = {
       version: j.centrinel_report_version as string,
       messages: j.messages as TranslationUnitMessageOpt[]
     };
@@ -118,7 +50,7 @@ async function fetchReport(url: string): Promise<State.StateType> {
   }
 }
 
-class App extends React.Component<{}, State.StateType> {
+class App extends React.Component<CentrinelReportProps, State.StateType> {
   constructor(props: CentrinelReportProps) {
       super(props);
       this.state = State.initialState ();

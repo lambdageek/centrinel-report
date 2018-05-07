@@ -1,30 +1,19 @@
 import * as React from 'react';
 import anchor from './anchor';
 import { TranslationUnitMessage,
-         TranslationUnitMessageOpt,
-         isTranslationUnitMessage,
          tumFullPath,
-         CentrinelAnalysisMessage,
-         CentrinelToolFail,
-         keyForMessage,
-         NakedPointerMessagePayload,
-         ErrorLevel,
-         NakedPointerVictim,
+         isTranslationUnitMessage,
+       } from '../model/CentrinelMessage/TranslationUnitMessage';
+import { TranslationUnitMessageOpt,
        } from '../model/CentrinelMessage';
-import VictimPositionView from './VictimPosition';
 import assertNever from '../model/assertNever';
 import Every from './Every';
+import * as CM from '../model/CentrinelMessage/Message';
+import * as ToolFail from '../model/CentrinelMessage/ToolFail';
+import { NakedPointerMessagePayloadView } from './NakedPointerMessage';
+import { MessageHeader } from './MessageHeader';
 
-function getTumClass (tum: TranslationUnitMessage): 'normal-tum' | 'elevated-tum' | 'abnormal-tum' {
-    switch (tum.message.tag) {
-    case 'NormalMessages':
-        return tum.message.isAbnormal ? 'elevated-tum' : 'normal-tum';
-    case 'ToolFailMessage':
-        return 'abnormal-tum';
-    default:
-        return assertNever (tum.message);
-    }
-}
+type TUM_CLASS = 'normal-tum' | 'elevated-tum' | 'abnormal-tum';
 
 export function TranslationUnitMessageView ({tum, tocId}: { tum: TranslationUnitMessage,
                                                             tocId: string | null }): JSX.Element {
@@ -34,18 +23,16 @@ export function TranslationUnitMessageView ({tum, tocId}: { tum: TranslationUnit
   switch (m.tag) {
   case 'NormalMessages': {
       const ms = m.messages;
-      const mess = ms.map((msg, i) => (
-                          <CentrinelAnalysisMessageView
-                            message={msg}
-                            key={keyForMessage(msg, i)}
-                          />));
       return (
           <div className={tumClass}>
-              <a id={fp} />
-              <div>{fp}</div>
-              <div>There are {ms.length} messages</div>
-              {...mess}
-              <BackToTOC tocId={tocId} />
+            <a id={fp} />
+            <div>{fp}</div>
+            <div>There are {ms.length} messages</div>
+            <Every items={ms}>{
+              (msg: CM.AnalysisMessage, i: number) =>
+                <CentrinelAnalysisMessageView message={msg} key={CM.keyForAnalysisMessage(msg, i)} />}
+            </Every>
+            <BackToTOC tocId={tocId} />
           </div>);
 
   }
@@ -61,6 +48,17 @@ export function TranslationUnitMessageView ({tum, tocId}: { tum: TranslationUnit
   }
 }
 
+function getTumClass (tum: TranslationUnitMessage): TUM_CLASS {
+    switch (tum.message.tag) {
+    case 'NormalMessages':
+        return tum.message.isAbnormal ? 'elevated-tum' : 'normal-tum';
+    case 'ToolFailMessage':
+        return 'abnormal-tum';
+    default:
+        return assertNever (tum.message);
+    }
+}
+
 export function TranslationUnitMessageOptView ({tum, tocId}: { tum: TranslationUnitMessageOpt,
                                                                tocId: string | null }): JSX.Element | null {
   if (isTranslationUnitMessage (tum)) {
@@ -70,36 +68,12 @@ export function TranslationUnitMessageOptView ({tum, tocId}: { tum: TranslationU
   }
 }
 
-let NakedPointerVictimView: React.SFC<NakedPointerVictim> =
-  ({type, position}) => (
-  <span>
-    <span>Pointer to managed heap {type}</span> in{'\n'}
-    <VictimPositionView {... position} />
-    {'\n'}
-  </span>);
-
-let MessageHeader: React.SFC<{position: string, errorLevel: ErrorLevel}> =
-  ({position, errorLevel}) => <span>{position + ': ' + errorLevel + ' '}</span>;
-
-let NakedPointerMessagePayloadView: React.SFC<NakedPointerMessagePayload> =
-  ({inDefinition, victims}) => {
-    const msghead = 'Naked pointer(s) to managed object(s) found in ' + (inDefinition ? 'definition' : 'declarataion');
-    return (
-        <>
-        <span>{msghead}</span>{'\n'}
-        <Every items={victims}>
-        {(victim) => <NakedPointerVictimView {... victim} />}
-        </Every>
-        </>
-        );
-  };
-
 export function RegionMismatchMessageView ({tag, lines}: {tag: 'regionMismatchMessage'; lines: string[]}): JSX.Element {
   const msg = ' ' + lines.join ('\n');
   return <span>{msg}</span>;
 }
 
-export function CentrinelAnalysisMessageView ({message}: { message: CentrinelAnalysisMessage }): JSX.Element {
+export function CentrinelAnalysisMessageView ({message}: { message: CM.AnalysisMessage }): JSX.Element {
   return (
       <div className="message">
       <code>
@@ -113,7 +87,7 @@ export function CentrinelAnalysisMessageView ({message}: { message: CentrinelAna
       </div>);
 }
   
-export function CentrinelToolFailView ({toolFailure}: { toolFailure: CentrinelToolFail }): JSX.Element {
+export function CentrinelToolFailView ({toolFailure}: { toolFailure: ToolFail.ToolFail }): JSX.Element {
   switch (toolFailure.tag) {
   case 'cppToolFail':
     return (
