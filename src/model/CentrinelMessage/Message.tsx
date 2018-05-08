@@ -19,11 +19,15 @@ export type MessageToolFail = Tagged<'ToolFailMessage'> & {
 
 export type Message = MessageNormal | MessageToolFail;
 
-export type AnalysisMessage = NakedPointerMessage | RegionMismatchMessage;
+export type AnalysisMessage = NakedPointerMessage | RegionMismatchMessage | CErrorMessage ;
 
 export type RegionMismatchMessage = Tagged<'regionMismatchMessage'> & AnalysisMessageBase & {
   readonly lines: string[];
   readonly regionMismatchMessage: object[];
+};
+
+export type CErrorMessage = Tagged<'cerrorMessage'> & AnalysisMessageBase & {
+  readonly lines: string[];
 };
 
 export function keyForAnalysisMessage (msg: AnalysisMessage, i: number): string {
@@ -31,6 +35,8 @@ export function keyForAnalysisMessage (msg: AnalysisMessage, i: number): string 
     case 'nakedPointerMessage':
       return msg.position + '\n' + keyForNakedPointerMessagePayload (msg.nakedPointerMessage);
     case 'regionMismatchMessage':
+      return msg.position + '\n' + msg.lines.join ('\n');
+    case 'cerrorMessage':
       return msg.position + '\n' + msg.lines.join ('\n');
     default:
       return assertNever (msg);

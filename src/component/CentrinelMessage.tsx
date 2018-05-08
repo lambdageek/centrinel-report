@@ -73,6 +73,11 @@ export function RegionMismatchMessageView ({tag, lines}: {tag: 'regionMismatchMe
   return <span>{msg}</span>;
 }
 
+export function CErrorMessageView ({tag, lines}: {tag: 'cerrorMessage'; lines: string[]}): JSX.Element {
+  const msg = ' ' + lines.join ('\n');
+  return <span className="cerrorMessage">{msg}</span>;
+}
+
 export function CentrinelAnalysisMessageView ({message}: { message: CM.AnalysisMessage }): JSX.Element {
   return (
       <div className="message">
@@ -81,7 +86,9 @@ export function CentrinelAnalysisMessageView ({message}: { message: CM.AnalysisM
       {
         message.tag === 'nakedPointerMessage' ?
           <NakedPointerMessagePayloadView {... message.nakedPointerMessage} /> :
-          <RegionMismatchMessageView tag={message.tag} lines={message.lines} />
+          message.tag === 'regionMismatchMessage' ?
+          <RegionMismatchMessageView tag={message.tag} lines={message.lines} /> :
+          <CErrorMessageView tag={message.tag} lines={message.lines} />
       }
       </code>
       </div>);
